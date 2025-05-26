@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Danh sách ủng hộ</title>
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: #00FF00;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 32px;
+      overflow: hidden;
+    }
+
+    #logo {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      height: 60px;
+    }
+
+    #marquee {
+      position: absolute;
+      top: 80px;
+      width: 100%;
+      text-align: center;
+      line-height: 2em;
+    }
+
+    .donor {
+      margin-bottom: 1em;
+    }
+  </style>
+</head>
+<body onload="openFullscreen(); fetchData(); setInterval(fetchData, 300000);">
+  <img id="logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/React-icon.svg/512px-React-icon.svg.png" alt="Logo" />
+  <div id="marquee">Đang tải dữ liệu...</div>
+
+  <script>
+    function openFullscreen() {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+      }
+    }
+
+    const sheetID = "1IHYV699mgMTzdEo0vKR7vWKVuDdJockAdygPfF9XjpY";
+    const sheetName = "Sheet1";
+    const query = encodeURIComponent("SELECT B, C");
+    const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${sheetName}&tq=${query}`;
+
+    async function fetchData() {
+      try {
+        const res = await fetch(url);
+        const text = await res.text();
+        const json = JSON.parse(text.substr(47).slice(0, -2));
+        const rows = json.table.rows;
+        const list = rows.map(row => {
+          const name = row.c[0]?.v || "";
+          const amount = row.c[1]?.v ? Number(row.c[1].v).toLocaleString("vi-VN") + " VNĐ" : "";
+          return `<div class="donor">${name} - ${amount}</div>`;
+        }).join("");
+
+        document.getElementById("marquee").innerHTML = `<div style="animation: scrollUp 20s linear infinite;">${list}</div>`;
+      } catch (err) {
+        document.getElementById("marquee").innerText = "Không thể tải dữ liệu. Kiểm tra kết nối hoặc chia sẻ file.";
+        console.error(err);
+      }
+    }
+
+    // Hiệu ứng chạy dọc lên
+    const style = document.createElement("style");
+    style.innerHTML = `
+      @keyframes scrollUp {
+        0% { transform: translateY(100%); }
+        100% { transform: translateY(-100%); }
+      }
+      #marquee > div {
+        display: inline-block;
+        animation: scrollUp 60s linear infinite;
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>
